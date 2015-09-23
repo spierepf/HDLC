@@ -35,7 +35,7 @@
 								<option id="gnu.cpp.compiler.lib.debug.option.debugging.level.2134594881" name="Debug Level" superClass="gnu.cpp.compiler.lib.debug.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 								<option id="gnu.cpp.compiler.option.include.paths.1851570982" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/include}&quot;"/>
-									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/pt/include}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/pt}&quot;"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.debugging.codecov.14328431" name="Generate gcov information (-ftest-coverage -fprofile-arcs)" superClass="gnu.cpp.compiler.option.debugging.codecov" value="true" valueType="boolean"/>
 								<inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.508596687" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
