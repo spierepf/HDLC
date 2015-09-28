@@ -9,7 +9,6 @@
 #define FRAMEBUFFER_H_
 
 #include <stdlib.h>
-#include <iostream>
 
 #include "RingBuffer.h"
 
@@ -93,8 +92,11 @@ public:
 
 typedef _FrameBuffer<64, 8> FrameBuffer;
 
-std::ostream &operator<<(std::ostream &os, const FrameBuffer &frameBuffer);
-
 } /* namespace hdlc */
+
+#ifndef AVR
+#include <iostream>
+std::ostream &operator<<(std::ostream &os, const hdlc::FrameBuffer &frameBuffer);
+#endif
 
 #endif /* FRAMEBUFFER_H_ */

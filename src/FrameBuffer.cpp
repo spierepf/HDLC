@@ -7,9 +7,8 @@
 
 #include "FrameBuffer.h"
 
-namespace hdlc {
-
-std::ostream &operator<<(std::ostream &os, const FrameBuffer &frameBuffer) {
+#ifndef AVR
+std::ostream &operator<<(std::ostream &os, const hdlc::FrameBuffer &frameBuffer) {
 	os << "{";
 	for (int i = 0; i < frameBuffer.size(); i++) {
 		os << " [";
@@ -21,5 +20,4 @@ std::ostream &operator<<(std::ostream &os, const FrameBuffer &frameBuffer) {
 	os << " }";
 	return os;
 }
-
-} /* namespace hdlc */
+#endif
