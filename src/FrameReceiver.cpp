@@ -9,7 +9,7 @@
 
 namespace hdlc {
 
-FrameReceiver::FrameReceiver(EscapingSource& source, FrameBuffer& frameBuffer) : source(source), frameBuffer(frameBuffer), expectedSequenceNumber(0x00), header(0x00), crc(0xFFFF), lastAckReceived(0x00) {
+FrameReceiver::FrameReceiver(EscapingSource& source, UserFrameHandler* userFrameHandler) : source(source), payloadSize(0), userFrameHandler(userFrameHandler), expectedSequenceNumber(0), header(0x00), crc(0xFFFF), lastAckReceived(0x00) {
 	// TODO Auto-generated constructor stub
 
 }
@@ -38,8 +38,7 @@ PT_THREAD(FrameReceiver::run()) {
 		while(!source.isFlag()) {
 			octet = source.read();
 			source.next();
-			PT_WAIT_UNTIL(&pt, !frameBuffer.isFull());
-			frameBuffer.put(octet);
+			payload[payloadSize++] = octet;
 			crc_ccitt_update(crc, octet);
 			PT_WAIT_UNTIL(&pt, source.isReady());
 		}
@@ -47,17 +46,15 @@ PT_THREAD(FrameReceiver::run()) {
 		// check crc and sequence number
 		if(crc == 0 && header == expectedSequenceNumber) {
 			// valid user frame
-			frameBuffer.revertOctets(2);
-			frameBuffer.endFrame();
+			userFrameHandler->handle(payload, payloadSize-2);
 			++expectedSequenceNumber;
 		} else if(crc == 0 && header >> 6 == 0x01) {
 			// valid ack frame
 			lastAckReceived = header;
-			frameBuffer.revertIncompleteFrame();
 		} else {
 			// framing error
-			frameBuffer.revertIncompleteFrame();
 		}
+		payloadSize = 0;
 	}
 	PT_END(&pt);
 }
