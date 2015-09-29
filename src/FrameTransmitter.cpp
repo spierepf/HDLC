@@ -43,7 +43,7 @@ PT_THREAD(FrameTransmitter::run()) {
 			sendAck = true;
 		} else {
 			PT_WAIT_UNTIL(&pt, sink.isReady());
-			octet = (0x01 << 6) + ackToSend;
+			octet = ACK + ackToSend;
 			sink.write(octet);
 			crc_ccitt_update(crc, octet);
 			sendAck = false;
