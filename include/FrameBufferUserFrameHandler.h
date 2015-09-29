@@ -8,19 +8,19 @@
 #ifndef FRAMEBUFFERUSERFRAMEHANDLER_H_
 #define FRAMEBUFFERUSERFRAMEHANDLER_H_
 
+#include <FrameHandler.h>
 #include "FrameBuffer.h"
-#include "UserFrameHandler.h"
 
 namespace hdlc {
 
-class FrameBufferUserFrameHandler : public UserFrameHandler {
+class FrameBufferUserFrameHandler : public FrameHandler {
 	FrameBuffer& frameBuffer;
 
 public:
 	FrameBufferUserFrameHandler(FrameBuffer&);
 	virtual ~FrameBufferUserFrameHandler();
 
-	virtual void handle(const uint8_t*, const uint8_t);
+	virtual void handle(const uint8_t, const uint8_t*, const uint8_t);
 };
 
 } /* namespace hdlc */

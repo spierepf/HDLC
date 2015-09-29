@@ -8,10 +8,10 @@
 #ifndef FRAMERECEIVER_H_
 #define FRAMERECEIVER_H_
 
+#include <FrameHandler.h>
 #include <Thread.h>
 
 #include "EscapingSource.h"
-#include "UserFrameHandler.h"
 #include "SequenceNumber.h"
 
 #include "crc.h"
@@ -22,7 +22,7 @@ class FrameReceiver : public Thread {
 	EscapingSource& source;
 	uint8_t payload[64];
 	uint8_t payloadSize;
-	UserFrameHandler* userFrameHandler;
+	FrameHandler* userFrameHandler;
 	SequenceNumber expectedSequenceNumber;
 	uint8_t header;
 	uint16_t crc;
@@ -36,7 +36,7 @@ public:
 		ACK = 0x40
 	};
 
-	FrameReceiver(EscapingSource&, UserFrameHandler*);
+	FrameReceiver(EscapingSource&, FrameHandler*);
 	virtual ~FrameReceiver();
 
 	SequenceNumber getLastAckReceived();

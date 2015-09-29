@@ -9,7 +9,7 @@
 
 namespace hdlc {
 
-FrameReceiver::FrameReceiver(EscapingSource& source, UserFrameHandler* userFrameHandler) : source(source), payloadSize(0), userFrameHandler(userFrameHandler), expectedSequenceNumber(0), header(0x00), crc(0xFFFF), lastAckReceived(0x00) {
+FrameReceiver::FrameReceiver(EscapingSource& source, FrameHandler* userFrameHandler) : source(source), payloadSize(0), userFrameHandler(userFrameHandler), expectedSequenceNumber(0), header(0x00), crc(0xFFFF), lastAckReceived(0x00) {
 	// TODO Auto-generated constructor stub
 
 }
@@ -46,7 +46,7 @@ PT_THREAD(FrameReceiver::run()) {
 		// check crc and sequence number
 		if(crc == 0 && header == expectedSequenceNumber) {
 			// valid user frame
-			userFrameHandler->handle(payload, payloadSize-2);
+			userFrameHandler->handle(header, payload, payloadSize-2);
 			++expectedSequenceNumber;
 		} else if(crc == 0 && header >> 6 == 0x01) {
 			// valid ack frame

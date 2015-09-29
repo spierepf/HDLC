@@ -18,7 +18,7 @@ FrameBufferUserFrameHandler::~FrameBufferUserFrameHandler() {
 	// TODO Auto-generated destructor stub
 }
 
-void FrameBufferUserFrameHandler::handle(const uint8_t* payload, const uint8_t payloadSize) {
+void FrameBufferUserFrameHandler::handle(const uint8_t header, const uint8_t* payload, const uint8_t payloadSize) {
 	for(int i = 0; i < payloadSize; i++) {
 		frameBuffer.put(payload[i]);
 	}
