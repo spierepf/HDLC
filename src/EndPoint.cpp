@@ -9,7 +9,7 @@
 
 namespace hdlc {
 
-EndPoint::EndPoint(EscapingSource& source, FrameReceiver& receiver, FrameTransmitter& transmitter, EscapingSink& sink) : source(source), receiver(receiver), transmitter(transmitter), sink(sink) {
+EndPoint::EndPoint(EscapingSource& source, FrameReceiver& receiver, FrameHandler& handler, FrameTransmitter& transmitter, EscapingSink& sink) : source(source), receiver(receiver), handler(handler), transmitter(transmitter), sink(sink) {
 	// TODO Auto-generated constructor stub
 
 }
@@ -23,12 +23,19 @@ PT_THREAD(EndPoint::run()) {
 	source.schedule();
 	receiver.schedule();
 
-	transmitter.setLastAckReceived(receiver.getLastAckReceived());
 	transmitter.setAckToSend(receiver.getExpectedSequenceNumber());
 
 	transmitter.schedule();
 	sink.schedule();
 	PT_END(&pt);
+}
+
+void EndPoint::handle(const uint8_t header, const uint8_t* payload, const uint8_t payloadSize) {
+	if((header & FrameReceiver::CONTROL_BITS) == FrameReceiver::ACK) {
+		transmitter.setLastAckReceived(header);
+	} else {
+		handler.handle(header, payload, payloadSize);
+	}
 }
 
 } /* namespace hdlc */

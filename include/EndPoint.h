@@ -14,12 +14,14 @@
 #include "FrameReceiver.h"
 #include "FrameTransmitter.h"
 #include "EscapingSink.h"
+#include "FrameHandler.h"
 
 namespace hdlc {
 
-class EndPoint: public Thread {
+class EndPoint: public Thread, public FrameHandler {
 	EscapingSource& source;
 	FrameReceiver& receiver;
+	FrameHandler& handler;
 	FrameTransmitter& transmitter;
 	EscapingSink& sink;
 
@@ -27,8 +29,10 @@ protected:
 	PT_THREAD(run());
 
 public:
-	EndPoint(EscapingSource&, FrameReceiver&, FrameTransmitter&, EscapingSink&);
+	EndPoint(EscapingSource&, FrameReceiver&, FrameHandler&, FrameTransmitter&, EscapingSink&);
 	virtual ~EndPoint();
+
+	virtual void handle(const uint8_t, const uint8_t*, const uint8_t);
 };
 
 } /* namespace hdlc */

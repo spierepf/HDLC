@@ -22,24 +22,25 @@ class FrameReceiver : public Thread {
 	EscapingSource& source;
 	uint8_t payload[64];
 	uint8_t payloadSize;
-	FrameHandler* userFrameHandler;
+	FrameHandler* frameHandler;
 	SequenceNumber expectedSequenceNumber;
 	uint8_t header;
 	uint16_t crc;
-	SequenceNumber lastAckReceived;
 
 protected:
 	virtual PT_THREAD(run());
 
 public:
 	enum {
-		ACK = 0x40
+		ACK = 0x40,
+		CONTROL_BITS = 0xC0
 	};
 
-	FrameReceiver(EscapingSource&, FrameHandler*);
+	FrameReceiver(EscapingSource&);
 	virtual ~FrameReceiver();
 
-	SequenceNumber getLastAckReceived();
+	void setFrameHandler(FrameHandler*);
+
 	SequenceNumber getExpectedSequenceNumber();
 };
 

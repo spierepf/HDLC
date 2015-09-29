@@ -7,9 +7,11 @@
 
 #include "FrameReceiver.h"
 
+#include <stdlib.h>
+
 namespace hdlc {
 
-FrameReceiver::FrameReceiver(EscapingSource& source, FrameHandler* userFrameHandler) : source(source), payloadSize(0), userFrameHandler(userFrameHandler), expectedSequenceNumber(0), header(0x00), crc(0xFFFF), lastAckReceived(0x00) {
+FrameReceiver::FrameReceiver(EscapingSource& source) : source(source), payloadSize(0), frameHandler(NULL), expectedSequenceNumber(0), header(0x00), crc(0xFFFF) {
 	// TODO Auto-generated constructor stub
 
 }
@@ -43,24 +45,24 @@ PT_THREAD(FrameReceiver::run()) {
 			PT_WAIT_UNTIL(&pt, source.isReady());
 		}
 
-		// check crc and sequence number
-		if(crc == 0 && header == expectedSequenceNumber) {
-			// valid user frame
-			userFrameHandler->handle(header, payload, payloadSize-2);
-			++expectedSequenceNumber;
-		} else if(crc == 0 && header >> 6 == 0x01) {
-			// valid ack frame
-			lastAckReceived = header;
-		} else {
-			// framing error
+		// check crc
+		if(crc == 0) {
+			if(header == expectedSequenceNumber) {
+				// this is an in-sequence user frame
+				if(frameHandler) frameHandler->handle(header, payload, payloadSize-2);
+				++expectedSequenceNumber;
+			} else if(header & CONTROL_BITS) {
+				// this is a control frame
+				if(frameHandler) frameHandler->handle(header, NULL, 0);
+			}
 		}
 		payloadSize = 0;
 	}
 	PT_END(&pt);
 }
 
-SequenceNumber FrameReceiver::getLastAckReceived() {
-	return lastAckReceived;
+void FrameReceiver::setFrameHandler(FrameHandler* frameHandler) {
+	this->frameHandler = frameHandler;
 }
 
 SequenceNumber FrameReceiver::getExpectedSequenceNumber() {
