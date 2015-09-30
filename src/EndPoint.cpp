@@ -22,9 +22,6 @@ PT_THREAD(EndPoint::run()) {
 	PT_BEGIN(&pt);
 	source.schedule();
 	receiver.schedule();
-
-	transmitter.setAckToSend(expectedSequenceNumber);
-
 	transmitter.schedule();
 	sink.schedule();
 	PT_END(&pt);
@@ -34,7 +31,7 @@ void EndPoint::handle(const uint8_t header, const uint8_t* payload, const uint8_
 	if((header & FrameReceiver::CONTROL_BITS) == FrameReceiver::ACK) {
 		transmitter.setLastAckReceived(header);
 	} else if(header == expectedSequenceNumber) {
-		++expectedSequenceNumber;
+		transmitter.setAckToSend(++expectedSequenceNumber);
 		handler.handle(header, payload, payloadSize);
 	}
 }
