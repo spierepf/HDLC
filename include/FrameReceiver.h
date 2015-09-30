@@ -12,7 +12,6 @@
 #include <Thread.h>
 
 #include "EscapingSource.h"
-#include "SequenceNumber.h"
 
 #include "crc.h"
 
@@ -22,10 +21,9 @@ class FrameReceiver : public Thread {
 	EscapingSource& source;
 	uint8_t payload[64];
 	uint8_t payloadSize;
-	FrameHandler* frameHandler;
-	SequenceNumber expectedSequenceNumber;
 	uint8_t header;
 	uint16_t crc;
+	FrameHandler* frameHandler;
 
 protected:
 	virtual PT_THREAD(run());
@@ -40,8 +38,6 @@ public:
 	virtual ~FrameReceiver();
 
 	void setFrameHandler(FrameHandler*);
-
-	SequenceNumber getExpectedSequenceNumber();
 };
 
 } /* namespace hdlc */

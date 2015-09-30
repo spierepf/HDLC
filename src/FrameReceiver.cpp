@@ -11,7 +11,7 @@
 
 namespace hdlc {
 
-FrameReceiver::FrameReceiver(EscapingSource& source) : source(source), payloadSize(0), frameHandler(NULL), expectedSequenceNumber(0), header(0x00), crc(0xFFFF) {
+FrameReceiver::FrameReceiver(EscapingSource& source) : source(source), payloadSize(0), header(0x00), crc(0xFFFF), frameHandler(NULL) {
 	// TODO Auto-generated constructor stub
 
 }
@@ -47,14 +47,7 @@ PT_THREAD(FrameReceiver::run()) {
 
 		// check crc
 		if(crc == 0) {
-			if(header == expectedSequenceNumber) {
-				// this is an in-sequence user frame
-				if(frameHandler) frameHandler->handle(header, payload, payloadSize-2);
-				++expectedSequenceNumber;
-			} else if(header & CONTROL_BITS) {
-				// this is a control frame
-				if(frameHandler) frameHandler->handle(header, NULL, 0);
-			}
+			if(frameHandler) frameHandler->handle(header, payloadSize < 3 ? NULL : payload, payloadSize-2);
 		}
 		payloadSize = 0;
 	}
@@ -63,10 +56,6 @@ PT_THREAD(FrameReceiver::run()) {
 
 void FrameReceiver::setFrameHandler(FrameHandler* frameHandler) {
 	this->frameHandler = frameHandler;
-}
-
-SequenceNumber FrameReceiver::getExpectedSequenceNumber() {
-	return expectedSequenceNumber;
 }
 
 } /* namespace hdlc */
