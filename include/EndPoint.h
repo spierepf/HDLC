@@ -22,6 +22,7 @@ class EndPoint: public Thread, public FrameHandler {
 	EscapingSource& source;
 	FrameReceiver& receiver;
 	FrameHandler& handler;
+	FrameBuffer& outgoingFrameBuffer;
 	FrameTransmitter& transmitter;
 	EscapingSink& sink;
 	SequenceNumber expectedSequenceNumber;
@@ -30,7 +31,7 @@ protected:
 	PT_THREAD(run());
 
 public:
-	EndPoint(EscapingSource&, FrameReceiver&, FrameHandler&, FrameTransmitter&, EscapingSink&);
+	EndPoint(EscapingSource&, FrameReceiver&, FrameHandler&, FrameBuffer&, FrameTransmitter&, EscapingSink&);
 	virtual ~EndPoint();
 
 	virtual void handle(const uint8_t, const uint8_t*, const uint8_t);

@@ -9,7 +9,7 @@
 
 namespace hdlc {
 
-EndPoint::EndPoint(EscapingSource& source, FrameReceiver& receiver, FrameHandler& handler, FrameTransmitter& transmitter, EscapingSink& sink) : source(source), receiver(receiver), handler(handler), transmitter(transmitter), sink(sink), expectedSequenceNumber(0) {
+EndPoint::EndPoint(EscapingSource& source, FrameReceiver& receiver, FrameHandler& handler, FrameBuffer& outgoingFrameBuffer, FrameTransmitter& transmitter, EscapingSink& sink) : source(source), receiver(receiver), handler(handler), outgoingFrameBuffer(outgoingFrameBuffer), transmitter(transmitter), sink(sink), expectedSequenceNumber(0) {
 	// TODO Auto-generated constructor stub
 
 }
