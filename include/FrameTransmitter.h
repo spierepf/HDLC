@@ -38,8 +38,6 @@ public:
 	FrameTransmitter(EscapingSink&, FrameBuffer&);
 	virtual ~FrameTransmitter();
 
-	SequenceNumber getFrameZeroSequenceNumber();
-
 	void setAckToSend(SequenceNumber);
 	void setLastAckReceived(SequenceNumber);
 };

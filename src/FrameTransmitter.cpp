@@ -55,10 +55,6 @@ PT_THREAD(FrameTransmitter::run()) {
 	PT_END(&pt);
 }
 
-SequenceNumber FrameTransmitter::getFrameZeroSequenceNumber() {
-	return frameZero;
-}
-
 void FrameTransmitter::setAckToSend(SequenceNumber sequenceNumber) {
 	ackToSend = sequenceNumber;
 }
