@@ -26,6 +26,9 @@ class EndPoint: public Thread, public FrameHandler {
 	FrameTransmitter& transmitter;
 	EscapingSink& sink;
 	SequenceNumber expectedSequenceNumber;
+	bool sendAck;
+	SequenceNumber zeroFrame;
+	SequenceNumber lastAckReceived;
 
 protected:
 	PT_THREAD(run());
