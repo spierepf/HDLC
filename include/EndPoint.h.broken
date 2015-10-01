@@ -5,8 +5,8 @@
  *      Author: peter
  */
 
-#ifndef ENDPOINT_H_
-#define ENDPOINT_H_
+#ifndef ENDPOINT_H_BROKEN_
+#define ENDPOINT_H_BROKEN_
 
 #include <Thread.h>
 
@@ -39,4 +39,4 @@ public:
 
 } /* namespace hdlc */
 
-#endif /* ENDPOINT_H_ */
+#endif /* ENDPOINT_H_BROKEN_ */

@@ -9,7 +9,12 @@
 
 namespace hdlc {
 
-FrameTransmitter::FrameTransmitter(EscapingSink& sink, FrameBuffer& frameBuffer) : sink(sink), frameBuffer(frameBuffer), crc(0xFFFF), position(0), frameZero(0x00), ackToSend(0x00), lastAckReceived(0x00), sendAck(false) {
+FrameTransmitter::FrameTransmitter(EscapingSink& sink) :
+		sink(sink),
+		ready(true),
+		header(0),
+		position(0),
+		crc(0xFFFF) {
 	// TODO Auto-generated constructor stub
 
 }
@@ -19,48 +24,31 @@ FrameTransmitter::~FrameTransmitter() {
 }
 
 PT_THREAD(FrameTransmitter::run()) {
-	uint8_t octet = 0x00;
-
 	PT_BEGIN(&pt);
-	PT_WAIT_UNTIL(&pt, sink.isReady()); sink.writeFlag();
 	for(;;) {
-		while(frameZero != lastAckReceived) {
-			frameBuffer.removeFrame();
-			++frameZero;
-		}
-		crc = 0xFFFF;
-		if(frameBuffer.size() > 0 && !sendAck) {
-			PT_WAIT_UNTIL(&pt, sink.isReady());
-			octet = frameZero;
-			sink.write(octet);
-			crc_ccitt_update(crc, octet);
-			for(position = 0; position < frameBuffer[0].size(); position++) {
-				PT_WAIT_UNTIL(&pt, sink.isReady());
-				octet = frameBuffer[0][position];
-				sink.write(octet);
-				crc_ccitt_update(crc, octet);
-			}
-			sendAck = true;
-		} else {
-			PT_WAIT_UNTIL(&pt, sink.isReady());
-			octet = ACK + ackToSend;
-			sink.write(octet);
-			crc_ccitt_update(crc, octet);
-			sendAck = false;
+		PT_WAIT_UNTIL(&pt, !ready);
+		PT_WAIT_UNTIL(&pt, sink.isReady()); sink.writeFlag();
+		PT_WAIT_UNTIL(&pt, sink.isReady()); sink.write(header); crc_ccitt_update(crc, header);
+		for(position = 0; position < frame.size(); position++) {
+			PT_WAIT_UNTIL(&pt, sink.isReady()); sink.write(frame[position]); crc_ccitt_update(crc, frame[position]);
 		}
 		PT_WAIT_UNTIL(&pt, sink.isReady()); sink.write(crc >> 8);
 		PT_WAIT_UNTIL(&pt, sink.isReady()); sink.write(crc & 0xFF);
 		PT_WAIT_UNTIL(&pt, sink.isReady()); sink.writeFlag();
+		ready = true;
+		crc = 0xFFFF;
 	}
 	PT_END(&pt);
 }
 
-void FrameTransmitter::setAckToSend(SequenceNumber sequenceNumber) {
-	ackToSend = sequenceNumber;
+bool FrameTransmitter::isReady() {
+	return ready;
 }
 
-void FrameTransmitter::setLastAckReceived(SequenceNumber sequenceNumber) {
-	lastAckReceived = sequenceNumber;
+void FrameTransmitter::transmit(uint8_t header, const FrameBuffer::Frame frame) {
+	this->header = header;
+	this->frame = frame;
+	ready = false;
 }
 
 } /* namespace hdlc */
