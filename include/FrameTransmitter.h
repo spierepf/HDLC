@@ -40,8 +40,6 @@ public:
 
 	SequenceNumber getFrameZeroSequenceNumber();
 
-	bool haveUserFrameToTransmit();
-
 	void setAckToSend(SequenceNumber);
 	void setLastAckReceived(SequenceNumber);
 };
