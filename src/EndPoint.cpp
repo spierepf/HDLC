@@ -11,19 +11,25 @@ namespace hdlc {
 
 EndPoint::EndPoint(EscapingSource& source, FrameReceiver& receiver, FrameHandler& handler, FrameBuffer& outgoingFrameBuffer, FrameTransmitter& transmitter, EscapingSink& sink) :
 		disconnected(*this),
+		syncRequestSent(*this),
+		syncResponseSent(*this),
 		connected(*this, outgoingFrameBuffer),
-		state(&disconnected),
+		state(NULL),
 		source(source),
 		receiver(receiver),
 		handler(handler),
 		transmitter(transmitter),
 		sink(sink) {
-	// TODO Auto-generated constructor stub
-
+	enterState(&disconnected);
 }
 
 EndPoint::~EndPoint() {
 	// TODO Auto-generated destructor stub
+}
+
+void EndPoint::enterState(State* newState) {
+	newState->onEntry();
+	state = newState;
 }
 
 PT_THREAD(EndPoint::run()) {
@@ -42,18 +48,137 @@ void EndPoint::connect() {
 	state->connect();
 }
 
+bool EndPoint::isConnected() {
+	return state == &connected;
+}
+
 void EndPoint::handle(const uint8_t header, const uint8_t* payload, const uint8_t payloadSize) {
 	state->handle(header, payload, payloadSize);
 }
 
+/*****************************************************************************************************/
+
 EndPoint::Disconnected::Disconnected(EndPoint& endPoint) : State(endPoint) {
 }
 
-void EndPoint::Disconnected::connect() {
-	endPoint.state = &(endPoint.connected);
+void EndPoint::Disconnected::onEntry() {
 }
 
+void EndPoint::Disconnected::connect() {
+	endPoint.enterState(&endPoint.syncRequestSent);
+}
+
+void EndPoint::Disconnected::go() {
+	if(sendSyn && endPoint.transmitter.isReady()) {
+		endPoint.transmitter.transmit(FrameTransmitter::SYN_DISCONNECT);
+		sendSyn = false;
+	}
+}
+
+void EndPoint::Disconnected::handle(const uint8_t header, const uint8_t*, const uint8_t) {
+	switch(header) {
+	case FrameReceiver::SYN_DISCONNECT:
+		break;
+
+	case FrameReceiver::SYN_REQUEST:
+		endPoint.enterState(&endPoint.syncResponseSent);
+		break;
+
+	default:
+		sendSyn = true;
+		break;
+	}
+}
+
+/*****************************************************************************************************/
+
+EndPoint::SyncRequestSent::SyncRequestSent(EndPoint& endPoint) : State(endPoint) {
+}
+
+void EndPoint::SyncRequestSent::onEntry() {
+	sendSyn = true;
+}
+
+void EndPoint::SyncRequestSent::connect() {
+}
+
+void EndPoint::SyncRequestSent::go() {
+	if(sendSyn && endPoint.transmitter.isReady()) {
+		endPoint.transmitter.transmit(FrameTransmitter::SYN_REQUEST);
+		sendSyn = false;
+	}
+}
+
+void EndPoint::SyncRequestSent::handle(const uint8_t header, const uint8_t*, const uint8_t) {
+	switch(header) {
+	case FrameReceiver::SYN_DISCONNECT:
+		endPoint.enterState(&endPoint.disconnected);
+		break;
+
+	case FrameReceiver::SYN_REQUEST:
+		endPoint.enterState(&endPoint.syncResponseSent);
+		break;
+
+	case FrameReceiver::SYN_RESPONSE:
+		endPoint.connected.sendSyn = true;
+		endPoint.enterState(&endPoint.connected);
+		break;
+
+	default:
+		sendSyn = true;
+	}
+}
+
+/*****************************************************************************************************/
+
+EndPoint::SyncResponseSent::SyncResponseSent(EndPoint& endPoint) : State(endPoint) {
+}
+
+void EndPoint::SyncResponseSent::onEntry() {
+	sendSyn = true;
+}
+
+void EndPoint::SyncResponseSent::connect() {
+	endPoint.enterState(&endPoint.syncRequestSent);
+}
+
+void EndPoint::SyncResponseSent::go() {
+	if(sendSyn && endPoint.transmitter.isReady()) {
+		endPoint.transmitter.transmit(FrameTransmitter::SYN_RESPONSE);
+		sendSyn = false;
+	}
+}
+
+void EndPoint::SyncResponseSent::handle(const uint8_t header, const uint8_t*, const uint8_t) {
+	switch(header) {
+	case FrameReceiver::SYN_DISCONNECT:
+		endPoint.enterState(&endPoint.disconnected);
+		break;
+
+	case FrameReceiver::SYN_RESPONSE:
+		endPoint.connected.sendSyn = true;
+		endPoint.enterState(&endPoint.connected);
+		break;
+
+	case FrameReceiver::SYN_COMPLETE:
+		endPoint.enterState(&endPoint.connected);
+		break;
+
+	default:
+		sendSyn = true;
+	}
+}
+
+/*****************************************************************************************************/
+
 EndPoint::Connected::Connected(EndPoint& endPoint, FrameBuffer& outgoingFrameBuffer) : State(endPoint), outgoingFrameBuffer(outgoingFrameBuffer), zeroFrame(0), lastAckReceived(0), sendAck(false), expectedSequenceNumber(0) {
+}
+
+void EndPoint::Connected::onEntry() {
+}
+
+void EndPoint::Connected::connect() {
+	endPoint.enterState(&endPoint.syncRequestSent);
 }
 
 void EndPoint::Connected::go()  {
@@ -62,7 +187,10 @@ void EndPoint::Connected::go()  {
 			outgoingFrameBuffer.removeFrame();
 			++zeroFrame;
 		}
-		if(sendAck || outgoingFrameBuffer.isEmpty()) {
+		if(sendSyn) {
+			endPoint.transmitter.transmit(FrameTransmitter::SYN_COMPLETE);
+			sendSyn = false;
+		} else if(sendAck || outgoingFrameBuffer.isEmpty()) {
 			endPoint.transmitter.transmit(FrameTransmitter::ACK + expectedSequenceNumber);
 			sendAck = false;
 		} else {
@@ -73,11 +201,31 @@ void EndPoint::Connected::go()  {
 }
 
 void EndPoint::Connected::handle(const uint8_t header, const uint8_t* payload, const uint8_t payloadSize) {
-	if((header & FrameReceiver::CONTROL_BITS) == FrameReceiver::ACK) {
-		lastAckReceived = header;
-	} else if(header == expectedSequenceNumber) {
-		++expectedSequenceNumber;
-		endPoint.handler.handle(header, payload, payloadSize);
+	switch(header) {
+	case FrameReceiver::SYN_DISCONNECT:
+		endPoint.enterState(&endPoint.disconnected);
+		break;
+
+	case FrameReceiver::SYN_REQUEST:
+		endPoint.enterState(&endPoint.syncResponseSent);
+		break;
+
+	case FrameReceiver::SYN_RESPONSE:
+		sendSyn = true;
+		break;
+
+	case FrameReceiver::SYN_COMPLETE:
+		endPoint.enterState(&endPoint.connected);
+		break;
+
+	default:
+		if((header & FrameReceiver::CONTROL_BITS) == FrameReceiver::ACK) {
+			lastAckReceived = header;
+		} else if(header == expectedSequenceNumber) {
+			++expectedSequenceNumber;
+			endPoint.handler.handle(header, payload, payloadSize);
+		}
+		break;
 	}
 }
 

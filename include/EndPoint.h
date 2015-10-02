@@ -24,18 +24,45 @@ class EndPoint: public Thread, public FrameHandler {
 		EndPoint& endPoint;
 
 	public:
-		State(EndPoint& endPoint) : endPoint(endPoint) {}
+		bool sendSyn;
 
+		State(EndPoint& endPoint) : endPoint(endPoint), sendSyn(false) {}
+
+		virtual void onEntry() {}
 		virtual void connect() {}
 		virtual void go() {}
 		virtual void handle(const uint8_t, const uint8_t*, const uint8_t) {}
 	};
 
 	class Disconnected : public State {
+
 	public:
 		Disconnected(EndPoint&);
 
+		virtual void onEntry();
 		virtual void connect();
+		virtual void go();
+		virtual void handle(const uint8_t, const uint8_t*, const uint8_t);
+	};
+
+	class SyncRequestSent : public State {
+	public:
+		SyncRequestSent(EndPoint&);
+
+		virtual void onEntry();
+		virtual void connect();
+		virtual void go();
+		virtual void handle(const uint8_t, const uint8_t*, const uint8_t);
+	};
+
+	class SyncResponseSent : public State {
+	public:
+		SyncResponseSent(EndPoint&);
+
+		virtual void onEntry();
+		virtual void connect();
+		virtual void go();
+		virtual void handle(const uint8_t, const uint8_t*, const uint8_t);
 	};
 
 	class Connected : public State {
@@ -48,11 +75,15 @@ class EndPoint: public Thread, public FrameHandler {
 	public:
 		Connected(EndPoint&, FrameBuffer&);
 
+		virtual void onEntry();
+		virtual void connect();
 		virtual void go();
 		virtual void handle(const uint8_t header, const uint8_t* payload, const uint8_t payloadSize);
 	};
 
 	Disconnected disconnected;
+	SyncRequestSent syncRequestSent;
+	SyncResponseSent syncResponseSent;
 	Connected connected;
 	State* state;
 
@@ -62,6 +93,8 @@ class EndPoint: public Thread, public FrameHandler {
 	FrameTransmitter& transmitter;
 	EscapingSink& sink;
 
+	void enterState(State*);
+
 protected:
 	PT_THREAD(run());
 
@@ -70,6 +103,8 @@ public:
 	virtual ~EndPoint();
 
 	void connect();
+	bool isConnected();
+
 	virtual void handle(const uint8_t, const uint8_t*, const uint8_t);
 };
 

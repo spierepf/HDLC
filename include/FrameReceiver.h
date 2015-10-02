@@ -31,7 +31,11 @@ protected:
 public:
 	enum {
 		ACK = 0x40,
-		CONTROL_BITS = 0xC0
+		CONTROL_BITS = 0xC0,
+		SYN_DISCONNECT = 0x80,
+		SYN_REQUEST = 0x81,
+		SYN_RESPONSE = 0x82,
+		SYN_COMPLETE = 0x83
 	};
 
 	FrameReceiver(EscapingSource&);
