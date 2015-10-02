@@ -175,6 +175,11 @@ EndPoint::Connected::Connected(EndPoint& endPoint, FrameBuffer& outgoingFrameBuf
 }
 
 void EndPoint::Connected::onEntry() {
+	zeroFrame = 0;
+	lastAckReceived = 0;
+	sendAck = false;
+	expectedSequenceNumber = false;
+	while(!outgoingFrameBuffer.isEmpty()) outgoingFrameBuffer.removeFrame();
 }
 
 void EndPoint::Connected::connect() {
