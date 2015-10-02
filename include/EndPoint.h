@@ -24,12 +24,18 @@ class EndPoint: public Thread, public FrameHandler {
 		EndPoint& endPoint;
 
 	public:
-		State(EndPoint& endPoint) : endPoint(endPoint) {
-		}
+		State(EndPoint& endPoint) : endPoint(endPoint) {}
 
-		virtual void go() {};
+		virtual void connect() {}
+		virtual void go() {}
+		virtual void handle(const uint8_t, const uint8_t*, const uint8_t) {}
+	};
 
-		virtual void handle(const uint8_t, const uint8_t*, const uint8_t) {};
+	class Disconnected : public State {
+	public:
+		Disconnected(EndPoint&);
+
+		virtual void connect();
 	};
 
 	class Connected : public State {
@@ -40,35 +46,13 @@ class EndPoint: public Thread, public FrameHandler {
 		SequenceNumber expectedSequenceNumber;
 
 	public:
-		Connected(EndPoint& endPoint, FrameBuffer& outgoingFrameBuffer) : State(endPoint), outgoingFrameBuffer(outgoingFrameBuffer), zeroFrame(0), lastAckReceived(0), sendAck(false), expectedSequenceNumber(0) {
-		}
+		Connected(EndPoint&, FrameBuffer&);
 
-		virtual void go() {
-			if(endPoint.transmitter.isReady()) {
-				while(zeroFrame != lastAckReceived) {
-					outgoingFrameBuffer.removeFrame();
-					++zeroFrame;
-				}
-				if(sendAck || outgoingFrameBuffer.isEmpty()) {
-					endPoint.transmitter.transmit(FrameTransmitter::ACK + expectedSequenceNumber);
-					sendAck = false;
-				} else {
-					endPoint.transmitter.transmit(zeroFrame, outgoingFrameBuffer[0]);
-					sendAck = true;
-				}
-			}
-		}
-
-		virtual void handle(const uint8_t header, const uint8_t* payload, const uint8_t payloadSize) {
-			if((header & FrameReceiver::CONTROL_BITS) == FrameReceiver::ACK) {
-				lastAckReceived = header;
-			} else if(header == expectedSequenceNumber) {
-				++expectedSequenceNumber;
-				endPoint.handler.handle(header, payload, payloadSize);
-			}
-		};
+		virtual void go();
+		virtual void handle(const uint8_t header, const uint8_t* payload, const uint8_t payloadSize);
 	};
 
+	Disconnected disconnected;
 	Connected connected;
 	State* state;
 
@@ -85,6 +69,7 @@ public:
 	EndPoint(EscapingSource&, FrameReceiver&, FrameHandler&, FrameBuffer&, FrameTransmitter&, EscapingSink&);
 	virtual ~EndPoint();
 
+	void connect();
 	virtual void handle(const uint8_t, const uint8_t*, const uint8_t);
 };
 
