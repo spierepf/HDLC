@@ -126,6 +126,7 @@ void EndPoint::SyncRequestSent::handle(const uint8_t header, const uint8_t*, con
 
 	default:
 		sendSyn = true;
+		break;
 	}
 }
 
@@ -155,6 +156,9 @@ void EndPoint::SyncResponseSent::handle(const uint8_t header, const uint8_t*, co
 		endPoint.enterState(&endPoint.disconnected);
 		break;
 
+	case FrameReceiver::SYN_REQUEST:
+		break;
+
 	case FrameReceiver::SYN_RESPONSE:
 		endPoint.connected.sendSyn = true;
 		endPoint.enterState(&endPoint.connected);
@@ -166,6 +170,7 @@ void EndPoint::SyncResponseSent::handle(const uint8_t header, const uint8_t*, co
 
 	default:
 		sendSyn = true;
+		break;
 	}
 }
 
