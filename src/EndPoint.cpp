@@ -225,7 +225,6 @@ void EndPoint::Connected::handle(const uint8_t header, const uint8_t* payload, c
 		break;
 
 	case FrameReceiver::SYN_COMPLETE:
-		endPoint.enterState(&endPoint.connected);
 		break;
 
 	default:
