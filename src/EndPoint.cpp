@@ -177,6 +177,11 @@ void EndPoint::SyncResponseSent::handle(const uint8_t header, const uint8_t*, co
 /*****************************************************************************************************/
 
 EndPoint::Connected::Connected(EndPoint& endPoint, FrameBuffer& outgoingFrameBuffer) : State(endPoint), outgoingFrameBuffer(outgoingFrameBuffer), zeroFrame(0), lastAckReceived(0), sendAck(false), sendUserFrame(true), idleCount(0), expectedSequenceNumber(0) {
+#ifdef AVR
+	timeout = 0x000007FF;
+#else
+	timeout = 0x0007FFFF;
+#endif
 }
 
 void EndPoint::Connected::onEntry() {
@@ -213,11 +218,9 @@ void EndPoint::Connected::go()  {
 				idleCount = 0;
 			} else {
 				idleCount++;
-#ifdef AVR
-				if(idleCount > 0x00000FFF) sendUserFrame = true;
-#else
-				if(idleCount > 0x0007FFFF) sendUserFrame = true;
-#endif
+				if(idleCount > timeout) {
+					sendUserFrame = true;
+				}
 			}
 		}
 	}

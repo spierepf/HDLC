@@ -72,6 +72,7 @@ class EndPoint: public Thread, public FrameHandler {
 		bool sendAck;
 		bool sendUserFrame;
 		uint32_t idleCount;
+		uint32_t timeout;
 		SequenceNumber expectedSequenceNumber;
 
 	public:
