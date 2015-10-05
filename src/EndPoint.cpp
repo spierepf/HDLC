@@ -176,13 +176,14 @@ void EndPoint::SyncResponseSent::handle(const uint8_t header, const uint8_t*, co
 
 /*****************************************************************************************************/
 
-EndPoint::Connected::Connected(EndPoint& endPoint, FrameBuffer& outgoingFrameBuffer) : State(endPoint), outgoingFrameBuffer(outgoingFrameBuffer), zeroFrame(0), lastAckReceived(0), sendAck(false), expectedSequenceNumber(0) {
+EndPoint::Connected::Connected(EndPoint& endPoint, FrameBuffer& outgoingFrameBuffer) : State(endPoint), outgoingFrameBuffer(outgoingFrameBuffer), zeroFrame(0), lastAckReceived(0), sendAck(false), sendUserFrame(true), idleCount(0), expectedSequenceNumber(0) {
 }
 
 void EndPoint::Connected::onEntry() {
 	zeroFrame = 0;
 	lastAckReceived = 0;
 	sendAck = false;
+	sendUserFrame = true;
 	expectedSequenceNumber = false;
 	while(!outgoingFrameBuffer.isEmpty()) outgoingFrameBuffer.removeFrame();
 }
@@ -200,12 +201,24 @@ void EndPoint::Connected::go()  {
 		if(sendSyn) {
 			endPoint.transmitter.transmit(FrameTransmitter::SYN_COMPLETE);
 			sendSyn = false;
-		} else if(sendAck || outgoingFrameBuffer.isEmpty()) {
+			idleCount = 0;
+		} else if(sendAck) {
 			endPoint.transmitter.transmit(FrameTransmitter::ACK + expectedSequenceNumber);
 			sendAck = false;
-		} else {
-			endPoint.transmitter.transmit(zeroFrame, outgoingFrameBuffer[0]);
-			sendAck = true;
+			idleCount = 0;
+		} else if(!outgoingFrameBuffer.isEmpty()) {
+			if(sendUserFrame)	{
+				endPoint.transmitter.transmit(zeroFrame, outgoingFrameBuffer[0]);
+				sendUserFrame = false;
+				idleCount = 0;
+			} else {
+				idleCount++;
+#ifdef AVR
+				if(idleCount > 0x00000FFF) sendUserFrame = true;
+#else
+				if(idleCount > 0x0007FFFF) sendUserFrame = true;
+#endif
+			}
 		}
 	}
 }
@@ -230,9 +243,13 @@ void EndPoint::Connected::handle(const uint8_t header, const uint8_t* payload, c
 	default:
 		if((header & FrameReceiver::CONTROL_BITS) == FrameReceiver::ACK) {
 			lastAckReceived = header;
-		} else if(header == expectedSequenceNumber) {
-			++expectedSequenceNumber;
-			endPoint.handler.handle(header, payload, payloadSize);
+			sendUserFrame = true;
+		} else {
+			sendAck = true;
+			if(header == expectedSequenceNumber) {
+				++expectedSequenceNumber;
+				endPoint.handler.handle(header, payload, payloadSize);
+			}
 		}
 		break;
 	}

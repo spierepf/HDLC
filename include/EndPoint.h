@@ -70,6 +70,8 @@ class EndPoint: public Thread, public FrameHandler {
 		SequenceNumber zeroFrame;
 		SequenceNumber lastAckReceived;
 		bool sendAck;
+		bool sendUserFrame;
+		uint32_t idleCount;
 		SequenceNumber expectedSequenceNumber;
 
 	public:
