@@ -103,9 +103,17 @@ void EndPoint::SyncRequestSent::connect() {
 }
 
 void EndPoint::SyncRequestSent::go() {
-	if(sendSyn && endPoint.transmitter.isReady()) {
-		endPoint.transmitter.transmit(FrameTransmitter::SYN_REQUEST);
-		sendSyn = false;
+	if(endPoint.transmitter.isReady()) {
+		if(sendSyn) {
+			endPoint.transmitter.transmit(FrameTransmitter::SYN_REQUEST);
+			sendSyn = false;
+			idleCount = 0;
+		} else {
+			idleCount++;
+			if(idleCount > timeout) {
+				sendSyn = true;
+			}
+		}
 	}
 }
 
@@ -176,12 +184,7 @@ void EndPoint::SyncResponseSent::handle(const uint8_t header, const uint8_t*, co
 
 /*****************************************************************************************************/
 
-EndPoint::Connected::Connected(EndPoint& endPoint, FrameBuffer& outgoingFrameBuffer) : State(endPoint), outgoingFrameBuffer(outgoingFrameBuffer), zeroFrame(0), lastAckReceived(0), sendAck(false), sendUserFrame(true), idleCount(0), expectedSequenceNumber(0) {
-#ifdef AVR
-	timeout = 0x000007FF;
-#else
-	timeout = 0x0007FFFF;
-#endif
+EndPoint::Connected::Connected(EndPoint& endPoint, FrameBuffer& outgoingFrameBuffer) : State(endPoint), outgoingFrameBuffer(outgoingFrameBuffer), zeroFrame(0), lastAckReceived(0), sendAck(false), sendUserFrame(true), expectedSequenceNumber(0) {
 }
 
 void EndPoint::Connected::onEntry() {

@@ -25,8 +25,16 @@ class EndPoint: public Thread, public FrameHandler {
 
 	public:
 		bool sendSyn;
+		uint32_t idleCount;
+		uint32_t timeout;
 
-		State(EndPoint& endPoint) : endPoint(endPoint), sendSyn(false) {}
+		State(EndPoint& endPoint) : endPoint(endPoint), sendSyn(false) {
+#ifdef AVR
+			timeout = 0x000007FF;
+#else
+			timeout = 0x0007FFFF;
+#endif
+		}
 
 		virtual void onEntry() {}
 		virtual void connect() {}
@@ -71,8 +79,6 @@ class EndPoint: public Thread, public FrameHandler {
 		SequenceNumber lastAckReceived;
 		bool sendAck;
 		bool sendUserFrame;
-		uint32_t idleCount;
-		uint32_t timeout;
 		SequenceNumber expectedSequenceNumber;
 
 	public:
