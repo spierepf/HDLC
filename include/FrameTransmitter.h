@@ -19,16 +19,13 @@
 
 namespace hdlc {
 
-class FrameTransmitter: public Thread {
+class FrameTransmitter: public Thread<FrameTransmitter> {
 	EscapingSink& sink;
 	bool ready;
 	uint8_t header;
 	FrameBuffer::Frame frame;
 	uint8_t position;
 	uint16_t crc;
-
-protected:
-	virtual PT_THREAD(run());
 
 public:
 	enum {
@@ -41,7 +38,9 @@ public:
 	};
 
 	FrameTransmitter(EscapingSink&);
-	virtual ~FrameTransmitter();
+	~FrameTransmitter();
+
+	PT_THREAD(run());
 
 	bool isReady();
 	void transmit(uint8_t, FrameBuffer::Frame = FrameBuffer::Frame());

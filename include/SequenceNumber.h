@@ -17,7 +17,7 @@ class SequenceNumber {
 
 public:
 	SequenceNumber(int value = 0);
-	virtual ~SequenceNumber();
+	~SequenceNumber();
 
 	operator int();
 	SequenceNumber& operator++();

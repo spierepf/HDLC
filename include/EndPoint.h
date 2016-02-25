@@ -18,7 +18,7 @@
 
 namespace hdlc {
 
-class EndPoint: public Thread, public FrameHandler {
+class EndPoint: public Thread<EndPoint>, public FrameHandler {
 	class State : public FrameHandler {
 	protected:
 		EndPoint& endPoint;
@@ -28,7 +28,7 @@ class EndPoint: public Thread, public FrameHandler {
 		uint32_t idleCount;
 		uint32_t timeout;
 
-		State(EndPoint& endPoint) : endPoint(endPoint), sendSyn(false) {
+		State(EndPoint& endPoint) : endPoint(endPoint), sendSyn(false), idleCount(0) {
 #ifdef AVR
 			timeout = 0x000007FF;
 #else
@@ -104,17 +104,16 @@ class EndPoint: public Thread, public FrameHandler {
 
 	void enterState(State*);
 
-protected:
-	PT_THREAD(run());
-
 public:
 	EndPoint(EscapingSource&, FrameReceiver&, FrameHandler&, FrameBuffer&, FrameTransmitter&, EscapingSink&);
-	virtual ~EndPoint();
+	~EndPoint();
+
+	PT_THREAD(run());
 
 	void connect();
 	bool isConnected();
 
-	virtual void handle(const uint8_t, const uint8_t*, const uint8_t);
+	void handle(const uint8_t, const uint8_t*, const uint8_t);
 };
 
 } /* namespace hdlc */

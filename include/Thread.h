@@ -12,16 +12,16 @@
 
 namespace hdlc {
 
+template<class Derived>
 class Thread {
 protected:
 	struct pt pt;
-	virtual PT_THREAD(run()) = 0;
 
 public:
-	Thread();
-	virtual ~Thread();
+	Thread() { PT_INIT(&pt); }
+	~Thread() {}
 
-	void schedule();
+	void schedule() { PT_SCHEDULE(static_cast<Derived*>(this)->run()); }
 };
 
 } /* namespace hdlc */

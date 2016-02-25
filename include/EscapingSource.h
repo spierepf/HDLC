@@ -15,14 +15,11 @@
 
 namespace hdlc {
 
-class EscapingSource: public Source<uint8_t>, public Thread {
+class EscapingSource: public Source<uint8_t>, public Thread<EscapingSource> {
 	Source<uint8_t>& source;
 	bool ready;
 	uint8_t octet;
 	bool flag;
-
-protected:
-	virtual PT_THREAD(run());
 
 public:
 	enum {
@@ -33,6 +30,8 @@ public:
 
 	EscapingSource(Source<uint8_t>&);
 	virtual ~EscapingSource();
+
+	PT_THREAD(run());
 
 	virtual bool isReady();
 	virtual uint8_t read();

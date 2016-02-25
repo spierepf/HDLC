@@ -17,16 +17,13 @@
 
 namespace hdlc {
 
-class FrameReceiver : public Thread {
+class FrameReceiver : public Thread<FrameReceiver> {
 	EscapingSource& source;
 	uint8_t payload[64];
 	uint8_t payloadSize;
 	uint8_t header;
 	uint16_t crc;
 	FrameHandler* frameHandler;
-
-protected:
-	virtual PT_THREAD(run());
 
 public:
 	enum {
@@ -39,7 +36,9 @@ public:
 	};
 
 	FrameReceiver(EscapingSource&);
-	virtual ~FrameReceiver();
+	~FrameReceiver();
+
+	PT_THREAD(run());
 
 	void setFrameHandler(FrameHandler*);
 };

@@ -15,14 +15,11 @@
 
 namespace hdlc {
 
-class EscapingSink: public Sink<uint8_t>, public Thread {
+class EscapingSink: public Sink<uint8_t>, public Thread<EscapingSink> {
 	Sink<uint8_t>& sink;
 	bool ready;
 	uint8_t octet;
 	bool escape;
-
-protected:
-	virtual PT_THREAD(run());
 
 public:
 	enum {
@@ -33,6 +30,8 @@ public:
 
 	EscapingSink(Sink<uint8_t>&);
 	virtual ~EscapingSink();
+
+	PT_THREAD(run());
 
 	virtual bool isReady();
 	virtual void write(const uint8_t&);
