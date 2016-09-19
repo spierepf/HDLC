@@ -90,7 +90,7 @@ public:
 	}
 };
 
-typedef _FrameBuffer<64, 8> FrameBuffer;
+typedef _FrameBuffer<128, 16> FrameBuffer;
 
 } /* namespace hdlc */
 
